@@ -1,11 +1,10 @@
-# Todo App
+# Personal Diary App
 
-For CS501 - Mobile App Development class. Uses Room db for persistent storage.
+For CS501 - Mobile App Development class. Uses DataStore for persistent storage.
 
 ## Features
 
-- Add new todo items with title and description
-- Edit task title or description
-- Delete tasks
-- Mark tasks as completed
-- Filter tasks by All, Completing, or Todo
+- Select a date from a calendar view to read or write an entry.
+- Add and edit entries for each day.
+- Save and apply user's preferred theme (dark/light) and font size using DataStore.
+- Securely store diary entries privately within internal storage.
