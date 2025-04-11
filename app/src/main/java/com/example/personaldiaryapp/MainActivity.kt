@@ -53,7 +53,12 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            PersonalDiaryAppTheme {
+            val theme by viewModel.theme.collectAsState()
+            val fS by viewModel.fontSize.collectAsState()
+
+            val isDarkTheme = theme == "Dark"
+            val fontSize = fS ?: 16
+            PersonalDiaryAppTheme(darkTheme = isDarkTheme, fontSize = fontSize) {
                 Column {
                     SettingsScreen(viewModel = viewModel)
                     HorizontalDivider()
