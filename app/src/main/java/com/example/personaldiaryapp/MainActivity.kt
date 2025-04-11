@@ -17,11 +17,25 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.personaldiaryapp.ui.theme.PersonalDiaryAppTheme
+import java.util.Date
+import java.util.Locale
+import androidx.compose.material3.*
+import java.text.SimpleDateFormat
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.TimeZone
+
 
 class MainActivity : ComponentActivity() {
     private lateinit var viewModel: ViewModel
@@ -35,7 +49,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PersonalDiaryAppTheme {
-                SettingsScreen(viewModel = viewModel)
+                Column {
+                    SettingsScreen(viewModel = viewModel)
+                    DiaryScreen()
+                }
             }
         }
     }
@@ -84,4 +101,70 @@ fun SettingsScreen(viewModel: ViewModel) {
             steps = 5
         )
     }
+}
+
+@Composable
+fun DiaryScreen() {
+    val current = LocalDateTime.now()
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    val today = remember {
+        current.format(formatter)
+    }
+
+    var selectedDate by remember { mutableStateOf(today) }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        DiaryDatePicker(
+            selectedDate = selectedDate,
+            onDateSelected = { selectedDate = it }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DiaryDatePicker(
+    selectedDate: String,
+    onDateSelected: (String) -> Unit
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    Column {
+        Text("Selected date: $selectedDate")
+        Button(onClick = { showDialog = true }) {
+            Text("Pick Date")
+        }
+    }
+
+    if (showDialog) {
+        val datePickerState = rememberDatePickerState()
+
+        DatePickerDialog(
+            onDismissRequest = { showDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val millis = datePickerState.selectedDateMillis
+                    if (millis != null) {
+                        onDateSelected(formatMillisToYMD(millis))
+                    }
+                    showDialog = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
+private fun formatMillisToYMD(millis: Long): String {
+    val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    formatter.timeZone = TimeZone.getTimeZone("UTC")
+    return formatter.format(Date(millis))
 }
