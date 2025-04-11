@@ -4,9 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -32,6 +34,8 @@ import java.text.SimpleDateFormat
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.TimeZone
@@ -44,14 +48,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val dataStoreManager = DataStoreManager(this)
-        viewModel = ViewModel(dataStoreManager)
+        val diaryRepository = DiaryRepository(this)
+        viewModel = ViewModel(dataStoreManager, diaryRepository)
 
         enableEdgeToEdge()
         setContent {
             PersonalDiaryAppTheme {
                 Column {
                     SettingsScreen(viewModel = viewModel)
-                    DiaryScreen()
+                    HorizontalDivider()
+                    DiaryScreen(viewModel = viewModel)
                 }
             }
         }
@@ -104,7 +110,7 @@ fun SettingsScreen(viewModel: ViewModel) {
 }
 
 @Composable
-fun DiaryScreen() {
+fun DiaryScreen(viewModel: ViewModel) {
     val current = LocalDateTime.now()
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val today = remember {
@@ -113,24 +119,39 @@ fun DiaryScreen() {
 
     var selectedDate by remember { mutableStateOf(today) }
 
+    LaunchedEffect(selectedDate) {
+        viewModel.loadDiary(selectedDate)
+    }
+
     Column(modifier = Modifier.padding(16.dp)) {
-        DiaryDatePicker(
-            selectedDate = selectedDate,
-            onDateSelected = { selectedDate = it }
+        DiaryDatePicker(onDateSelected = { selectedDate = it })
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text("Diary Entry for $selectedDate")
+
+        TextField(
+            value = viewModel.diaryText.value,
+            onValueChange = viewModel::updateDiaryText,
+            modifier = Modifier.fillMaxWidth().height(450.dp)
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = { viewModel.saveDiary(selectedDate) }) {
+            Text("Save Entry")
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DiaryDatePicker(
-    selectedDate: String,
-    onDateSelected: (String) -> Unit
-) {
+fun DiaryDatePicker(onDateSelected: (String) -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
 
-    Column {
-        Text("Selected date: $selectedDate")
+    Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text("Select a date:")
+        Spacer(Modifier.width(20.dp))
         Button(onClick = { showDialog = true }) {
             Text("Pick Date")
         }
